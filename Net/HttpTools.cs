@@ -12,7 +12,6 @@ namespace SignInService.Net
     {
           
         
-        private  readonly string[] _linkArr;
         private readonly int _timeout ;
         private readonly string _userAgent ;
         public HttpTools()
@@ -20,11 +19,7 @@ namespace SignInService.Net
             var temp = int.Parse(ConfigurationManager.AppSettings["RequestTimeout"]); 
              _timeout = temp == 0 ? 5000: temp;
             _userAgent = ConfigurationManager.AppSettings["UserAgent"];
-            string[] links = ConfigurationManager.AppSettings["TargetLink"].Split(',');
-            if (links.Length > 0)
-            {
-                _linkArr = links;
-            }
+           
         }
         public  bool GetHttpResult(string url)
         {
