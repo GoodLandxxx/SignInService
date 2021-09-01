@@ -40,7 +40,10 @@ namespace SignInService
             // 
             // serviceInstaller1
             // 
+            this.serviceInstaller1.Description = "在开机的时候跟关机下班的时候自动签到";
+            this.serviceInstaller1.DisplayName = "一个自动签到的程序";
             this.serviceInstaller1.ServiceName = "SignInService";
+            this.serviceInstaller1.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.serviceInstaller1_AfterInstall);
             // 
             // ProjectInstaller
             // 

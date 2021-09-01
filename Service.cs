@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SignInService.Net;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -12,6 +13,7 @@ namespace SignInService
 {
     public partial class Service : ServiceBase
     {
+        
         public Service()
         {
             InitializeComponent();
@@ -19,6 +21,7 @@ namespace SignInService
 
         protected override void OnStart(string[] args)
         {
+           
             using (System.IO.StreamWriter sw = new System.IO.StreamWriter("C:\\log.txt", true))
             {
                 sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss ") + "Start.");
@@ -27,6 +30,7 @@ namespace SignInService
 
         protected override void OnStop()
         {
+            //var s = HttpTools.GetHttpResult();
             using (System.IO.StreamWriter sw = new System.IO.StreamWriter("C:\\log.txt", true))
             {
                 sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss ") + "Stop.");
