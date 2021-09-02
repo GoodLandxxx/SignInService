@@ -22,10 +22,19 @@ namespace SignInService
         /// 轮询时间 单位:秒
         /// </summary>
         private int rotationTime;
+        private int regularOpenHour;
+        private int regularOpenMinute;
+        private int regularCloseHour;
+        private int regularCloseMinute;
+
         /// <summary>
-        /// 轮询时间 单位:秒
+        /// 0 <开始>签到，1 <结束> 签到
         /// </summary>
-        private DateTime[] regularTime;
+        private int isSign;
+
+        private int count = 0;
+
+
 
 
         private static object obj;
@@ -51,15 +60,39 @@ namespace SignInService
 
             if (!int.TryParse(ConfigurationManager.AppSettings["RotationTime"], out rotationTime) || rotationTime == 0)
                 rotationTime = 30;
+
+            string[] regularOpenTimes = ConfigurationManager.AppSettings["RegularOpenTimes"].Split(':');
+            if (!(regularOpenTimes.Length > 1
+                && int.TryParse(regularOpenTimes[0], out regularOpenHour)
+                && int.TryParse(regularOpenTimes[1], out regularOpenMinute)))
+            {
+                regularOpenHour = 08;
+                regularOpenMinute = 40;
+            }
+            string[] regularCloseTimes = ConfigurationManager.AppSettings["RegularCloseTimes"].Split(':');
+            if (!(regularCloseTimes.Length > 1
+             && int.TryParse(regularCloseTimes[0], out regularCloseHour)
+             && int.TryParse(regularCloseTimes[1], out regularCloseMinute)))
+            {
+                regularCloseHour = 18;
+                regularCloseMinute = 10;
+            }
         }
 
         protected override void OnStart(string[] args)
         {
-
-            using (System.IO.StreamWriter sw = new System.IO.StreamWriter("C:\\log.txt", true))
+            Task.Run(async () =>
             {
-                sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss ") + "Start.");
-            }
+                while (true)
+                {
+                    using (System.IO.StreamWriter sw = new System.IO.StreamWriter("C:\\log.txt", true))
+                    {
+                        sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss ") + "Start."+ count);
+                        count++;
+                    }
+                    await Task.Delay(1000);
+                }
+            });
         }
 
         protected override void OnStop()
