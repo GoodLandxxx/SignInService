@@ -17,7 +17,7 @@ namespace SignInService.Net
         public HttpTools()
         {
             var temp = int.Parse(ConfigurationManager.AppSettings["RequestTimeout"]); 
-             _timeout = temp == 0 ? 5000: temp;
+             _timeout = temp == 0 ? 5000: temp * 1000;
             _userAgent = ConfigurationManager.AppSettings["UserAgent"];
            
         }

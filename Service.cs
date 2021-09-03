@@ -30,7 +30,7 @@ namespace SignInService
         /// <summary>
         /// 0 <开始>签到，1 <结束> 签到
         /// </summary>
-        private int isSign;
+        private int signState;
 
         private int count = 0;
 
@@ -42,6 +42,7 @@ namespace SignInService
         public Service()
         {
             InitializeComponent();
+            WriterSometing("Start SignService");
             InitParameter();
         }
 
@@ -51,13 +52,11 @@ namespace SignInService
         private void InitParameter()
         {
 
-            string[] links = ConfigurationManager.AppSettings["TargetLink"].Split(',');
+            string[] links = ConfigurationManager.AppSettings["TargetLink"].Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             if (links.Length > 0)
             {
                 linkArr = links;
             }
-
-
             if (!int.TryParse(ConfigurationManager.AppSettings["RotationTime"], out rotationTime) || rotationTime == 0)
                 rotationTime = 30;
 
@@ -77,31 +76,102 @@ namespace SignInService
                 regularCloseHour = 18;
                 regularCloseMinute = 10;
             }
+            signState = 0;
         }
 
         protected override void OnStart(string[] args)
+        {
+            Rotation();
+        }
+
+        protected override void OnStop()
+        {
+            var nowHour = DateTime.Now.Hour;
+            var nowMinute = DateTime.Now.Minute;
+            var now = CreateDateTime(nowHour, nowMinute);
+            var time = CreateDateTime(regularCloseHour, regularCloseMinute);
+            if (time.CompareTo(now) <= 0)
+            {
+                var tools = new HttpTools();
+                for (int i = 0; i < linkArr.Length && !string.IsNullOrWhiteSpace(linkArr[i]); i++)
+                {
+                    if (tools.GetHttpResult(linkArr[i]))
+                    {
+                        WriterSometing("OnStopfunc Succed SignCloseWork-" + linkArr[i]);
+                    }
+                    else
+                    {
+                        WriterSometing("OnStopfunc failed SignCloseWork-" + linkArr[i]);
+                    }
+                }
+            }
+
+            WriterSometing("End SignService");
+        }
+
+
+        private void Rotation()
         {
             Task.Run(async () =>
             {
                 while (true)
                 {
-                    using (System.IO.StreamWriter sw = new System.IO.StreamWriter("C:\\log.txt", true))
-                    {
-                        sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss ") + "Start."+ count);
-                        count++;
-                    }
-                    await Task.Delay(1000);
+                    WriterSometing(signState.ToString());
+                    if (signState == 0)
+                        await Rotation(signState, regularOpenHour, regularOpenMinute);
+                    if (signState == 1)
+                        await Rotation(signState, regularCloseHour, regularCloseMinute);
+                    await Task.Delay(rotationTime * 1000);
                 }
             });
-        }
 
-        protected override void OnStop()
+        }
+        private async Task Rotation(int state, int hour, int minute)
         {
-            //var s = HttpTools.GetHttpResult();
+            var nowHour = DateTime.Now.Hour;
+            var nowMinute = DateTime.Now.Minute;
+            var str = state == 0 ? "OpenWork" : "CloseWork";
+            var now = CreateDateTime(nowHour, nowMinute);
+            var time = CreateDateTime(hour, minute);
+            if (time.CompareTo(now) <= 0)
+            {
+                var tools = new HttpTools();
+                int k = 0;
+                for (int i = 0; i < linkArr.Length && !string.IsNullOrWhiteSpace(linkArr[i]); i++)
+                {
+
+                    await Task.Delay(new Random().Next(0, 10) * 1000);
+                    if (tools.GetHttpResult(linkArr[i]))
+                    {
+                        k++;
+                        WriterSometing(str + ",Succed, " + linkArr[i]);
+                       
+                    }
+                    else
+                    {
+                        WriterSometing(str + ",Failed," + linkArr[i]);
+                    }
+                }
+                if (linkArr.Length == k)
+                {
+                    signState++;
+                }
+            }
+            return;
+        }
+        private void WriterSometing(string str)
+        {
             using (System.IO.StreamWriter sw = new System.IO.StreamWriter("C:\\log.txt", true))
             {
-                sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss ") + "Stop.");
+                sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "-----" + str);
+                count++;
             }
+        }
+        private DateTime CreateDateTime(int hour, int minute)
+        {
+
+            var now = DateTime.Now;
+            return new DateTime(now.Year, now.Month, now.Day, hour, minute, 0);
         }
     }
 }
